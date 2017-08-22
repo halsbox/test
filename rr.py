@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # -*- coding: utf-8 -*-
 from __future__ import division
 from lxml import html
 from bs4 import UnicodeDammit
-import json, requests, urllib, os, re
+import json, requests, urllib, os, re, csv
 
 street_type = 'str1'
 street = u'Якубовича'
@@ -97,7 +97,7 @@ searchURL = baseURL + ur'p0/IZ7_01HA1A42KODT90AR30VLN22001=CZ6_GQ4E1C41KGQ170AIA
 rr_sess = requests.session()
 rr_api_sess = requests.session()
 
-house_path = "./rosreestr/" + street + " " + street_types[street_type].lower() + "/" + house 
+house_path = "./rosreestr2/" + street + " " + street_types[street_type].lower() + "/" + house 
 if not os.path.exists(house_path):
     os.makedirs(house_path)
 
@@ -127,6 +127,7 @@ def parse_search( search_tree ):
     data = parse_page(tree)
     rl = parse_rights(tree)
     m = parse_more(tree)
+    sdata = ""
     if len(rl[0]) > 0:
       f = open(rights_path, 'w')
       for d in sorted(rl[0]):
@@ -142,14 +143,19 @@ def parse_search( search_tree ):
       f.write(m.encode("utf-8").strip())
       f.close()
     f = open(common_path, 'w')
-    f.write(data.encode("utf-8").strip())
+    for key, value in data.items():
+      sdata = sdata + '{} {}\n'.format(key.encode("utf-8").strip(), value.encode("utf-8").strip())
+    f.write(sdata)
     f.close()
+    if o["apartment"]:
+      if data[u'(ОКС) Тип:'] == u'Квартира, Жилое помещение':
+        lf_data.append([o["apartment"].encode("utf-8").strip(), data[u'Этаж:'].encode("utf-8").strip(), data[u"Площадь ОКС'a:"].encode("utf-8").strip(), data[u'Кадастровая стоимость:'].encode("utf-8").strip()])
     print data_path
 
 def parse_page( page_tree ):
   page = page_tree.xpath('//td[@class="brdw1010"]')[0]
   rows = page.xpath('.//tr[not(@height)]')
-  rdata = ''
+  rdata = {}
   for row in rows:
     if row.xpath('.//td[1]/nobr/text()'):
       r_key = row.xpath('.//td[1]/nobr/text()')[0].strip()
@@ -159,7 +165,7 @@ def parse_page( page_tree ):
       r_value = row.xpath('.//td[2]/b/text()')[0].strip()
     else:
       r_value = ''
-    rdata = rdata + r_key + " " + r_value + "\n"
+    rdata[r_key] = r_value
   return rdata
 
 def parse_rights( page_tree ):
@@ -167,6 +173,7 @@ def parse_rights( page_tree ):
   rows = page.xpath('.//tr[@height="25px"]')
   rights = {}
   limits = {}
+  n = 1
   for row in rows:
     right = row.xpath('.//td[1]/text()')[0].strip()
     if right != "":      
@@ -174,7 +181,7 @@ def parse_rights( page_tree ):
       date_r = right_r[3]
       date_s = date_r.split('.')
       date_s.reverse()
-      rights[".".join(date_s)] = date_r + " " + " ".join(right_r[4:]) + " " + right_r[1]
+      rights[".".join(date_s) + "_" + str(n)] = date_r + " " + " ".join(right_r[4:]) + " " + right_r[1]
     if row.xpath('.//tr/td/text()'):
       limit = row.xpath('.//tr/td/text()')[0].strip()
       if limit != "":
@@ -182,7 +189,8 @@ def parse_rights( page_tree ):
         date_r = limit_r[3]
         date_s = date_r.split('.')
         date_s.reverse()
-        limits[".".join(date_s)] = date_r + " " + " ".join(limit_r[4:]) + " " + limit_r[1]
+        limits[".".join(date_s) + "_" + str(n)] = date_r + " " + " ".join(limit_r[4:]) + " " + limit_r[1]
+    n = n + 1
   return [rights, limits]
 
 def parse_more( page_tree ):
@@ -196,6 +204,7 @@ def parse_more( page_tree ):
         rmore = rmore + more + "\n"
   return rmore
 
+lf_data = []
 r = rr_sess.post(searchURL, data=payload)
 html_ud = UnicodeDammit(r.content, is_html=True)
 parser = html.HTMLParser(encoding=html_ud.original_encoding)
@@ -211,8 +220,11 @@ if rows_number > 20:
     tree = html.document_fromstring(r.content, parser=parser)
     parse_search(tree)
     print "Получил страницу %d из %d" %(pn, pages_number)
-
-#            f.write(link_name.encode("utf-8").strip() + " " + link_href + "\n")        
-#            print "дом %s, кв %s" %(o["house"].encode("utf-8").strip(), o["apartment"].encode("utf-8").strip())    
-#    f.write(object_number + " " + link_name.encode("utf-8").strip() + " " + link_href + "\n")
-#f.close()
+with open(house_path + u"/Квартиры.csv", "wb") as f:
+    writer = csv.writer(f, quoting=csv.QUOTE_ALL)
+    lf_data.sort(key=lambda x:int(x[0]))
+    writer.writerow([u"Кв".encode('utf-8'), u"Эт".encode('utf-8'), u"Пл".encode('utf-8'), u"КС".encode('utf-8')])
+    for row in lf_data:
+      row=[s.encode('utf-8') for s in row]
+      writer.writerows([row])
+print house_path + u"/Квартиры.csv"
