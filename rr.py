@@ -6,8 +6,8 @@ from bs4 import UnicodeDammit
 import json, requests, urllib, os, re
 
 street_type = 'str1'
-street = u'Кирочная'
-house = u'24'
+street = u'Якубовича'
+house = u'20'
 
 street_types = {
     'str1'  : u'Улица',
@@ -91,9 +91,8 @@ payload = {
     "right_reg":        "",
     "encumbrance_reg":  ""
 }
-
-baseURL  = ur'https://rosreestr.ru/wps/portal/p/cc_ib_portal_services/online_request/!ut/p/z1/04_Sj9CPykssy0xPLMnMz0vMAfIjo8zi3QNNXA2dTQy93QMNzQ0cPR29DY0N3Q0MQkz1w_Eq8DfUj6JEP1ABSL8BDuBoANQfhdcKZyMCCkBOJGRJQW5ohEGmpyIAKLXudw!!/'
-searchURL = baseURL + ur'p0/IZ7_01HA1A42KG4D30A3BUVH3O0000=CZ6_GQ4E1C41KGQ170AIAK131G00T5=MEcontroller!QCPSearchAction==/'
+baseURL  = ur'https://rosreestr.ru/wps/portal/p/cc_ib_portal_services/online_request/!ut/p/z1/04_Sj9CPykssy0xPLMnMz0vMAfIjo8zi3QNNXA2dTQy93QMNzQ0cPR29DY0N3Q0MQkz1w_Eq8DfUj6JEP1ABSL8BDuBoANQfhdcKZyMCCkBOJGxJZJR5vIGhh6Oho4mRt7uJi7GBo7FTaJiHsT9IiX5BbmiEQWZAJQAEJnXg/'
+searchURL = baseURL + ur'p0/IZ7_01HA1A42KODT90AR30VLN22001=CZ6_GQ4E1C41KGQ170AIAK131G00T5=MEcontroller!QCPSearchAction==/'
 
 rr_sess = requests.session()
 rr_api_sess = requests.session()
