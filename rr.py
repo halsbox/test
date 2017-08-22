@@ -97,7 +97,7 @@ searchURL = baseURL + ur'p0/IZ7_01HA1A42KODT90AR30VLN22001=CZ6_GQ4E1C41KGQ170AIA
 rr_sess = requests.session()
 rr_api_sess = requests.session()
 
-house_path = "./rosreestr2/" + street + " " + street_types[street_type].lower() + "/" + house 
+house_path = "./rosreestr/" + street + " " + street_types[street_type].lower() + "/" + house 
 if not os.path.exists(house_path):
     os.makedirs(house_path)
 
